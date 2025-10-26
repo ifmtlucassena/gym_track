@@ -43,3 +43,32 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Firebase
+**/serviceAccountKey.json
+**/*-key.json
+**/*.p12
+**/*.pem
+
+# Ambiente
+.env
+.env.local
+*.env
+
+# Outros
+*.log
+.DS_Store
