@@ -49,43 +49,47 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.primary, Color(0xFF0F172A)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '🏋️',
-                style: TextStyle(fontSize: 80),
+      backgroundColor: AppColors.white,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo placeholder com ícone
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(20),
               ),
-              SizedBox(height: 24),
-              Text(
-                'GymTrack',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              child: Icon(
+                Icons.fitness_center,
+                size: 60,
+                color: AppColors.white,
               ),
-              SizedBox(height: 12),
-              Text(
-                'Sua evolução começa aqui',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
+            ),
+            SizedBox(height: 32),
+            Text(
+              'GymTrack',
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
               ),
-              SizedBox(height: 48),
-              CircularProgressIndicator(color: Colors.white),
-            ],
-          ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Sua evolução começa aqui',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 48),
+            CircularProgressIndicator(
+              color: AppColors.primary,
+            ),
+          ],
         ),
       ),
     );

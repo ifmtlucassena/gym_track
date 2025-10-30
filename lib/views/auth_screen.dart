@@ -106,15 +106,9 @@ class _AuthScreenState extends State<AuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 48),
-                const Text(
-                  '🏋️',
-                  style: TextStyle(fontSize: 64),
-                  textAlign: TextAlign.center,
-                ),
                 const SizedBox(height: 24),
                 Text(
-                  _isLoginMode ? 'Bem-vindo de volta!' : 'Criar conta',
+                  _isLoginMode ? 'Bem-vindo de volta' : 'Criar conta',
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

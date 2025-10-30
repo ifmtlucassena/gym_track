@@ -18,17 +18,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      emoji: '💪',
+      icon: Icons.fitness_center,
       title: 'Monte seu treino ideal',
       subtitle: '800+ exercícios com fotos e descrições completas',
     ),
     OnboardingPage(
-      emoji: '📊',
+      icon: Icons.edit_note,
       title: 'Registre cada treino',
       subtitle: 'Anote séries, repetições e cargas em segundos',
     ),
     OnboardingPage(
-      emoji: '📈',
+      icon: Icons.trending_up,
       title: 'Acompanhe sua evolução',
       subtitle: 'Veja seus PRs, gráficos de progresso e conquistas',
     ),
@@ -92,7 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 8,
                   decoration: BoxDecoration(
                     color: _currentPage == index
-                        ? AppColors.secondary
+                        ? AppColors.primary
                         : AppColors.divider,
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -129,9 +129,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            page.emoji,
-            style: const TextStyle(fontSize: 120),
+          // Ícone grande com container circular
+          Container(
+            width: 150,
+            height: 150,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              page.icon,
+              size: 80,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(height: 48),
           Text(
@@ -159,12 +169,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class OnboardingPage {
-  final String emoji;
+  final IconData icon;
   final String title;
   final String subtitle;
 
   OnboardingPage({
-    required this.emoji,
+    required this.icon,
     required this.title,
     required this.subtitle,
   });

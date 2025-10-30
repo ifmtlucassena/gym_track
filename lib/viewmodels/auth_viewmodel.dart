@@ -104,17 +104,47 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   String _tratarErro(dynamic e) {
-    if (e.toString().contains('user-not-found')) {
-      return 'Usuário não encontrado';
-    } else if (e.toString().contains('wrong-password')) {
-      return 'Senha incorreta';
-    } else if (e.toString().contains('email-already-in-use')) {
-      return 'Email já está em uso';
-    } else if (e.toString().contains('weak-password')) {
-      return 'Senha muito fraca (mínimo 6 caracteres)';
-    } else if (e.toString().contains('invalid-email')) {
+    final errorMessage = e.toString().toLowerCase();
+    
+    // Erros de credenciais
+    if (errorMessage.contains('invalid-credential') || 
+        errorMessage.contains('wrong-password') ||
+        errorMessage.contains('user-not-found')) {
+      return 'Email ou senha incorretos';
+    }
+    
+    // Erros de cadastro
+    if (errorMessage.contains('email-already-in-use')) {
+      return 'Este email já está cadastrado';
+    }
+    
+    if (errorMessage.contains('weak-password')) {
+      return 'Senha muito fraca. Use no mínimo 6 caracteres';
+    }
+    
+    if (errorMessage.contains('invalid-email')) {
       return 'Email inválido';
     }
-    return 'Erro ao autenticar: ${e.toString()}';
+    
+    // Erros de rede
+    if (errorMessage.contains('network-request-failed')) {
+      return 'Sem conexão com a internet';
+    }
+    
+    if (errorMessage.contains('too-many-requests')) {
+      return 'Muitas tentativas. Tente novamente mais tarde';
+    }
+    
+    // Erros do Google Sign In
+    if (errorMessage.contains('account-exists-with-different-credential')) {
+      return 'Já existe uma conta com este email';
+    }
+    
+    if (errorMessage.contains('popup-closed-by-user')) {
+      return 'Login cancelado';
+    }
+    
+    // Erro genérico apenas se não for nenhum dos acima
+    return 'Erro ao realizar operação. Tente novamente';
   }
 }
