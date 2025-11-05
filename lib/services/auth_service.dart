@@ -13,34 +13,50 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   Future<UsuarioModel?> cadastrarComEmail(String email, String senha, String nome) async {
-    final userCredential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: senha,
-    );
+    try {
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: senha,
+      );
 
-    final usuario = UsuarioModel(
-      id: userCredential.user!.uid,
-      nome: nome,
-      email: email,
-      dataCadastro: DateTime.now(),
-      isAnonimo: false,
-    );
+      final usuario = UsuarioModel(
+        id: userCredential.user!.uid,
+        nome: nome,
+        email: email,
+        dataCadastro: DateTime.now(),
+        isAnonimo: false,
+      );
 
-    await _firestore
-        .collection(FirebaseConstants.usuarios)
-        .doc(usuario.id)
-        .set(usuario.toFirestore());
+      await _firestore
+          .collection(FirebaseConstants.usuarios)
+          .doc(usuario.id)
+          .set(usuario.toFirestore());
 
-    return usuario;
+      return usuario;
+    } on FirebaseAuthException catch (e) {
+      // Propaga a exceção do Firebase para o ViewModel tratar
+      throw e;
+    } catch (e) {
+      // Qualquer outro erro
+      throw Exception('Erro ao cadastrar: ${e.toString()}');
+    }
   }
 
   Future<UsuarioModel?> loginComEmail(String email, String senha) async {
-    final userCredential = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: senha,
-    );
+    try {
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: senha,
+      );
 
-    return await buscarUsuario(userCredential.user!.uid);
+      return await buscarUsuario(userCredential.user!.uid);
+    } on FirebaseAuthException catch (e) {
+      // Propaga a exceção do Firebase para o ViewModel tratar
+      throw e;
+    } catch (e) {
+      // Qualquer outro erro
+      throw Exception('Erro ao fazer login: ${e.toString()}');
+    }
   }
 
   Future<UsuarioModel?> loginComGoogle() async {

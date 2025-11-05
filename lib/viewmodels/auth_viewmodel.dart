@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import '../models/usuario_model.dart';
 import '../services/auth_service.dart';
 
@@ -104,6 +105,41 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   String _tratarErro(dynamic e) {
+    // Se for um FirebaseAuthException, usa o código direto
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'invalid-credential':
+        case 'wrong-password':
+        case 'user-not-found':
+          return 'Email ou senha incorretos';
+        
+        case 'email-already-in-use':
+          return 'Este email já está cadastrado';
+        
+        case 'weak-password':
+          return 'Senha muito fraca. Use no mínimo 6 caracteres';
+        
+        case 'invalid-email':
+          return 'Email inválido';
+        
+        case 'network-request-failed':
+          return 'Sem conexão com a internet';
+        
+        case 'too-many-requests':
+          return 'Muitas tentativas. Tente novamente mais tarde';
+        
+        case 'operation-not-allowed':
+          return 'Operação não permitida';
+        
+        case 'user-disabled':
+          return 'Esta conta foi desativada';
+        
+        default:
+          return 'Erro ao realizar operação. Tente novamente';
+      }
+    }
+    
+    // Se não for FirebaseAuthException, tenta pelo texto
     final errorMessage = e.toString().toLowerCase();
     
     // Erros de credenciais
