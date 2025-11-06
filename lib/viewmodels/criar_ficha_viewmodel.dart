@@ -177,8 +177,10 @@ class CriarFichaViewModel extends ChangeNotifier {
       final novosExercicios = List<ExercicioModel>.from(dia.exercicios);
 
       // Validação de índices
-      if (oldIndex < 0 || oldIndex >= novosExercicios.length ||
-          newIndex < 0 || newIndex >= novosExercicios.length ||
+      if (oldIndex < 0 ||
+          oldIndex >= novosExercicios.length ||
+          newIndex < 0 ||
+          newIndex >= novosExercicios.length ||
           oldIndex == newIndex) {
         return;
       }

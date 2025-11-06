@@ -176,7 +176,11 @@ class EscolherFichaProntaScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context); // Fecha o diálogo de confirmação
+              final navigator = Navigator.of(context);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+              // Fecha o diálogo de confirmação
+              navigator.pop(); 
 
               // Mostra loading
               showDialog(
@@ -190,30 +194,28 @@ class EscolherFichaProntaScreen extends StatelessWidget {
                 ),
               );
 
-              // Cria a ficha
-              final sucesso = await fichaViewModel.criarFichaDeTemplate(
-                templateId: templateId,
-                usuarioId: usuarioId,
-              );
+              try {
+                // Cria a ficha
+                final sucesso = await fichaViewModel.criarFichaDeTemplate(
+                  templateId: templateId,
+                  usuarioId: usuarioId,
+                );
 
-              // Fecha o loading
-              if (context.mounted) {
-                Navigator.pop(context);
-              }
+                // Fecha o loading
+                navigator.pop();
 
-              // Mostra resultado e volta para a tela de fichas
-              if (context.mounted) {
+                // Mostra resultado e volta para a tela de fichas
                 if (sucesso) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     const SnackBar(
                       content: Text('Ficha criada com sucesso!'),
                       backgroundColor: Color(0xFF10B981),
                     ),
                   );
                   // Volta para FichasScreen (fecha a tela de escolher ficha)
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  navigator.popUntil((route) => route.isFirst);
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Text(
                         fichaViewModel.mensagemErro ?? 'Erro ao criar ficha',
@@ -222,6 +224,17 @@ class EscolherFichaProntaScreen extends StatelessWidget {
                     ),
                   );
                 }
+              } catch (e) {
+                // Garante que o loading é fechado em caso de erro inesperado
+                if (navigator.canPop()) {
+                  navigator.pop();
+                }
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Ocorreu um erro: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(

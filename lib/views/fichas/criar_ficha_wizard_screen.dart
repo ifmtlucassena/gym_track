@@ -268,9 +268,13 @@ class CriarFichaWizardScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
+              final navigator = Navigator.of(context);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final fichaViewModel = Provider.of<FichaViewModel>(context, listen: false);
+
               final nome = nomeController.text.trim();
               if (nome.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   const SnackBar(
                     content: Text('O nome da ficha é obrigatório'),
                     backgroundColor: Colors.red,
@@ -279,7 +283,8 @@ class CriarFichaWizardScreen extends StatelessWidget {
                 return;
               }
 
-              Navigator.pop(context); // Fecha o diálogo
+              // Fecha o diálogo
+              navigator.pop(); 
 
               viewModel.setNomeFicha(nome);
               viewModel.setDescricaoFicha(descricaoController.text.trim());
@@ -289,32 +294,27 @@ class CriarFichaWizardScreen extends StatelessWidget {
 
               final sucesso = await viewModel.salvarFicha(usuarioId);
 
-              if (context.mounted) {
-                if (sucesso) {
-                  // Recarrega as fichas
-                  final fichaViewModel = Provider.of<FichaViewModel>(context, listen: false);
-                  await fichaViewModel.carregarFichas(usuarioId);
+              if (sucesso) {
+                // Recarrega as fichas
+                await fichaViewModel.carregarFichas(usuarioId);
 
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Ficha criada com sucesso!'),
-                        backgroundColor: Color(0xFF10B981),
-                      ),
-                    );
-                    // Volta para FichasScreen (fecha wizard e escolher ficha)
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        viewModel.mensagemErro ?? 'Erro ao criar ficha',
-                      ),
-                      backgroundColor: Colors.red,
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Ficha criada com sucesso!'),
+                    backgroundColor: Color(0xFF10B981),
+                  ),
+                );
+                // Volta para FichasScreen (fecha wizard)
+                navigator.popUntil((route) => route.isFirst);
+              } else {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      viewModel.mensagemErro ?? 'Erro ao criar ficha',
                     ),
-                  );
-                }
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
