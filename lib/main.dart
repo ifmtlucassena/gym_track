@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/home_viewmodel.dart';
 import 'views/splash_screen.dart';
 
 void main() async {
@@ -21,8 +22,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthViewModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => HomeViewModel()),
+      ],
       child: MaterialApp(
         title: 'GymTrack',
         debugShowCheckedModeBanner: false,
