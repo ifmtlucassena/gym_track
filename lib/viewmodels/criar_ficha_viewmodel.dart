@@ -48,6 +48,36 @@ class CriarFichaViewModel extends ChangeNotifier {
   String _descricaoFicha = '';
   String get descricaoFicha => _descricaoFicha;
 
+  // MODO DE OPERAÇÃO (Criação vs Edição)
+  bool _modoEdicao = false;
+  bool get modoEdicao => _modoEdicao;
+  String? _idFichaOriginal;
+
+  // Inicializa o ViewModel com os dados de uma ficha para edição
+  void inicializarComFicha(FichaModel ficha) {
+    _modoEdicao = true;
+    _idFichaOriginal = ficha.id;
+    _nomeFicha = ficha.nome;
+    _descricaoFicha = ficha.descricao ?? '';
+
+    // Preenche os dias selecionados
+    _diasSelecionados.fillRange(0, 7, false);
+    for (var dia in ficha.diasTreino) {
+      if (dia.diaSemana >= 0 && dia.diaSemana < 7) {
+        _diasSelecionados[dia.diaSemana] = true;
+      }
+    }
+
+    // Copia os dias de treino
+    _diasTreino.clear();
+    _diasTreino.addAll(ficha.diasTreino.map((d) => d.copyWith()).toList());
+
+    // Inicia no passo de nomear os dias, já que a seleção já foi feita
+    _passoAtual = PassoWizard.nomearDias;
+
+    notifyListeners();
+  }
+
   // MÉTODOS DO PASSO 1: SELECIONAR DIAS
 
   void toggleDia(int diaSemana) {
@@ -216,6 +246,14 @@ class CriarFichaViewModel extends ChangeNotifier {
   }
 
   Future<bool> salvarFicha(String usuarioId) async {
+    if (_modoEdicao) {
+      return _atualizarFicha(usuarioId);
+    } else {
+      return _criarFicha(usuarioId);
+    }
+  }
+
+  Future<bool> _criarFicha(String usuarioId) async {
     if (_nomeFicha.trim().isEmpty) {
       _mensagemErro = 'O nome da ficha é obrigatório';
       notifyListeners();
@@ -259,6 +297,50 @@ class CriarFichaViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> _atualizarFicha(String usuarioId) async {
+    if (_idFichaOriginal == null) {
+      _mensagemErro = 'ID da ficha original não encontrado para atualização.';
+      notifyListeners();
+      return false;
+    }
+    if (_nomeFicha.trim().isEmpty) {
+      _mensagemErro = 'O nome da ficha é obrigatório';
+      notifyListeners();
+      return false;
+    }
+    if (!podeContinuarPasso3()) {
+      _mensagemErro = 'Todos os dias devem ter pelo menos 1 exercício';
+      notifyListeners();
+      return false;
+    }
+
+    _setCarregando(true);
+    _mensagemErro = null;
+
+    try {
+      final fichaAtualizada = FichaModel(
+        id: _idFichaOriginal!,
+        usuarioId: usuarioId,
+        nome: _nomeFicha,
+        descricao: _descricaoFicha.isNotEmpty ? _descricaoFicha : null,
+        diasTreino: _diasTreino,
+        // Mantém os outros campos do original que não são editados aqui
+        origem: 'customizada', // Pode ser necessário buscar do original
+        ativa: true, // Lógica de ativação é separada
+        dataCriacao: DateTime.now(), // Manter a data original? Depende da regra.
+      );
+
+      await _fichaService.atualizarFicha(fichaAtualizada);
+
+      _setCarregando(false);
+      return true;
+    } catch (e) {
+      _mensagemErro = 'Erro ao atualizar ficha: ${e.toString()}';
+      _setCarregando(false);
+      return false;
+    }
+  }
+
   // NAVEGAÇÃO
 
   void voltarPasso() {
@@ -287,6 +369,8 @@ class CriarFichaViewModel extends ChangeNotifier {
     _descricaoFicha = '';
     _carregando = false;
     _mensagemErro = null;
+    _modoEdicao = false;
+    _idFichaOriginal = null;
     notifyListeners();
   }
 

@@ -2,6 +2,7 @@ import 'serie_model.dart';
 
 class ExercicioModel {
   final String id;
+  final String exercicioId; // Referência ao ID do exercício no catálogo
   final String nome;
   final String? grupo_muscular;
   final String? observacao;
@@ -11,6 +12,7 @@ class ExercicioModel {
 
   ExercicioModel({
     required this.id,
+    required this.exercicioId,
     required this.nome,
     this.grupo_muscular,
     this.observacao,
@@ -22,6 +24,7 @@ class ExercicioModel {
   factory ExercicioModel.fromMap(Map<String, dynamic> map, String id) {
     return ExercicioModel(
       id: id,
+      exercicioId: map['exercicioId'] ?? '',
       nome: map['nome'] ?? '',
       grupo_muscular: map['grupo_muscular'],
       observacao: map['observacao'],
@@ -39,6 +42,7 @@ class ExercicioModel {
 
   Map<String, dynamic> toMap() {
     return {
+      'exercicioId': exercicioId,
       'nome': nome,
       'grupo_muscular': grupo_muscular,
       'observacao': observacao,
@@ -50,6 +54,7 @@ class ExercicioModel {
 
   ExercicioModel copyWith({
     String? id,
+    String? exercicioId,
     String? nome,
     String? grupo_muscular,
     String? observacao,
@@ -59,6 +64,7 @@ class ExercicioModel {
   }) {
     return ExercicioModel(
       id: id ?? this.id,
+      exercicioId: exercicioId ?? this.exercicioId,
       nome: nome ?? this.nome,
       grupo_muscular: grupo_muscular ?? this.grupo_muscular,
       observacao: observacao ?? this.observacao,

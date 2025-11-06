@@ -8,6 +8,7 @@ import 'viewmodels/home_viewmodel.dart';
 import 'viewmodels/ficha_viewmodel.dart';
 import 'viewmodels/criar_ficha_viewmodel.dart';
 import 'views/splash_screen.dart';
+import 'package:gym_track/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<AuthService>(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => FichaViewModel()),

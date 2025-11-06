@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';// TODO: Implementar fichas screen
 
+import 'package:gym_track/views/fichas/editar_ficha_wizard_screen.dart';
+import 'package:gym_track/views/fichas/detalhe_ficha_screen.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -155,10 +158,10 @@ class _FichasScreenState extends State<FichasScreen> {
                 child: FichaCard(
                   ficha: ficha,
                   onTap: () {
-                    // TODO: Navegar para detalhes da ficha
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Detalhes da ficha em breve'),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetalheFichaScreen(ficha: ficha),
                       ),
                     );
                   },
@@ -171,12 +174,17 @@ class _FichasScreenState extends State<FichasScreen> {
                     );
                   },
                   onEditar: () {
-                    // TODO: Navegar para edição
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Edição em breve'),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditarFichaWizardScreen(ficha: ficha),
                       ),
-                    );
+                    ).then((_) {
+                      // Recarrega as fichas quando a tela de edição é fechada
+                      if (usuarioId != null) {
+                        fichaViewModel.carregarFichas(usuarioId);
+                      }
+                    });
                   },
                   onDeletar: () {
                     _mostrarDialogoDeletar(
@@ -208,10 +216,10 @@ class _FichasScreenState extends State<FichasScreen> {
                 child: FichaCard(
                   ficha: ficha,
                   onTap: () {
-                    // TODO: Navegar para detalhes da ficha
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Detalhes da ficha em breve'),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetalheFichaScreen(ficha: ficha),
                       ),
                     );
                   },

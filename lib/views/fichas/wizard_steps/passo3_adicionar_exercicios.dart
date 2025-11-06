@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/criar_ficha_viewmodel.dart';
@@ -468,7 +468,6 @@ class _ExercicioCardState extends State<_ExercicioCard> {
                     const SizedBox(height: 12),
                     ...List.generate(widget.exercicio.series.length, (serieIndex) {
                       final serie = widget.exercicio.series[serieIndex];
-                      final peso = serie.peso != null ? '${serie.peso}kg' : '-';
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Container(
@@ -490,7 +489,7 @@ class _ExercicioCardState extends State<_ExercicioCard> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  '${serie.repeticoes} reps • $peso',
+                                  '${serie.repeticoes} reps',
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
                                     color: const Color(0xFF1E293B),

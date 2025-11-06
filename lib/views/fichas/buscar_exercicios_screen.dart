@@ -580,7 +580,6 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
             onPressed: () {
               final numSeries = int.tryParse(numSeriesController.text) ?? 3;
               final repeticoes = int.tryParse(repeticoesController.text) ?? 12;
-              final peso = double.tryParse(pesoController.text) ?? 0.0;
 
               // Criar séries
               final series = List.generate(
@@ -588,13 +587,13 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
                 (index) => SerieModel(
                   numeroSerie: index + 1,
                   repeticoes: repeticoes,
-                  peso: peso,
                 ),
               );
 
               // Criar ExercicioModel para adicionar à ficha
               final exercicioParaFicha = ExercicioModel(
                 id: 'ex_${DateTime.now().millisecondsSinceEpoch}',
+                exercicioId: exercicio.id,
                 nome: exercicio.nome,
                 grupo_muscular: exercicio.primeiroMusculo,
                 series: series,
