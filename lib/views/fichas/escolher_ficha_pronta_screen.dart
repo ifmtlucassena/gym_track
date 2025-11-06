@@ -39,9 +39,9 @@ class EscolherFichaProntaScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Descrição
+            // Descrição geral
             Text(
-              'Escolha uma ficha pronta',
+              'Criar Nova Ficha',
               style: GoogleFonts.inter(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -50,7 +50,7 @@ class EscolherFichaProntaScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Selecione um template de treino baseado no seu nível de experiência.',
+              'Crie sua ficha personalizada ou escolha um template pronto.',
               style: GoogleFonts.inter(
                 fontSize: 15,
                 color: Colors.grey.shade600,
@@ -60,26 +60,29 @@ class EscolherFichaProntaScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Botão Criar Ficha Personalizada
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const CriarFichaWizardScreen(),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CriarFichaWizardScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_circle_outline),
+                label: Text(
+                  'Criar Ficha Personalizada',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF3B82F6),
+                  side: const BorderSide(color: Color(0xFF3B82F6), width: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                );
-              },
-              icon: const Icon(Icons.add_circle_outline),
-              label: Text(
-                'Criar Ficha Personalizada',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF3B82F6),
-                side: const BorderSide(color: Color(0xFF3B82F6), width: 2),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -92,7 +95,7 @@ class EscolherFichaProntaScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    'ou escolha um template',
+                    'ou',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: Colors.grey.shade600,
@@ -102,7 +105,18 @@ class EscolherFichaProntaScreen extends StatelessWidget {
                 Expanded(child: Divider(color: Colors.grey.shade300)),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+
+            // Título templates
+            Text(
+              'Templates Prontos',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 12),
 
             // Lista de templates
             Expanded(
@@ -162,14 +176,17 @@ class EscolherFichaProntaScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context); // Fecha o diálogo
-              
+              Navigator.pop(context); // Fecha o diálogo de confirmação
+
               // Mostra loading
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => const Center(
-                  child: CircularProgressIndicator(),
+                builder: (context) => WillPopScope(
+                  onWillPop: () async => false,
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
                 ),
               );
 
@@ -193,7 +210,8 @@ class EscolherFichaProntaScreen extends StatelessWidget {
                       backgroundColor: Color(0xFF10B981),
                     ),
                   );
-                  Navigator.pop(context); // Volta para FichasScreen
+                  // Volta para FichasScreen (fecha a tela de escolher ficha)
+                  Navigator.of(context).popUntil((route) => route.isFirst);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

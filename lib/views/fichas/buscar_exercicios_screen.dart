@@ -1,36 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/exercicio_model.dart';
 import '../../models/serie_model.dart';
-
-// Model temporário para exercícios do catálogo
-class ExercicioCatalogo {
-  final String id;
-  final String nome;
-  final String grupoMuscular;
-  final String? equipamento;
-  final String? descricao;
-
-  ExercicioCatalogo({
-    required this.id,
-    required this.nome,
-    required this.grupoMuscular,
-    this.equipamento,
-    this.descricao,
-  });
-
-  factory ExercicioCatalogo.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return ExercicioCatalogo(
-      id: doc.id,
-      nome: data['nome'] ?? '',
-      grupoMuscular: data['grupo_muscular'] ?? '',
-      equipamento: data['equipamento'],
-      descricao: data['descricao'],
-    );
-  }
-}
+import '../../services/exercicio_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class BuscarExerciciosScreen extends StatefulWidget {
   const BuscarExerciciosScreen({super.key});
@@ -40,42 +14,37 @@ class BuscarExerciciosScreen extends StatefulWidget {
 }
 
 class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
+  final ExercicioService _service = ExercicioService();
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  String? _grupoSelecionado;
-  List<ExercicioCatalogo> _exercicios = [];
-  bool _carregando = true;
 
-  final List<String> _gruposMusculares = [
-    'Todos',
-    'Peito',
-    'Costas',
-    'Ombros',
-    'Bíceps',
-    'Tríceps',
-    'Pernas',
-    'Abdômen',
-  ];
+  String _searchQuery = '';
+  String? _filtroMusculo;
+  String? _filtroEquipamento;
+
+  List<ExercicioCatalogo> _exercicios = [];
+  MetadadosExercicios? _metadados;
+  bool _carregando = true;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _carregarExercicios();
+    _carregarDados();
   }
 
-  Future<void> _carregarExercicios() async {
+  Future<void> _carregarDados() async {
     setState(() => _carregando = true);
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('exercicios')
-          .orderBy('nome')
-          .get();
+      // Carrega metadados e exercícios em paralelo
+      final results = await Future.wait([
+        _service.buscarMetadados(),
+        _service.buscarTodosExercicios(),
+      ]);
 
       setState(() {
-        _exercicios = snapshot.docs
-            .map((doc) => ExercicioCatalogo.fromFirestore(doc))
-            .toList();
+        _metadados = results[0] as MetadadosExercicios?;
+        _exercicios = results[1] as List<ExercicioCatalogo>;
         _carregando = false;
       });
     } catch (e) {
@@ -91,32 +60,75 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
     }
   }
 
-  List<ExercicioCatalogo> get _exerciciosFiltrados {
-    var filtrados = _exercicios;
+  Future<void> _aplicarFiltros() async {
+    setState(() => _carregando = true);
 
-    // Filtro por grupo muscular
-    if (_grupoSelecionado != null && _grupoSelecionado != 'Todos') {
-      filtrados = filtrados
-          .where((ex) => ex.grupoMuscular == _grupoSelecionado)
-          .toList();
+    try {
+      final exercicios = await _service.buscarExerciciosFiltrados(
+        musculo: _filtroMusculo,
+        equipamento: _filtroEquipamento,
+        busca: _searchQuery.isNotEmpty ? _searchQuery : null,
+      );
+
+      setState(() {
+        _exercicios = exercicios;
+        _carregando = false;
+      });
+    } catch (e) {
+      setState(() => _carregando = false);
     }
+  }
 
-    // Filtro por busca
-    if (_searchQuery.isNotEmpty) {
-      filtrados = filtrados
-          .where((ex) =>
-              ex.nome.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              ex.grupoMuscular.toLowerCase().contains(_searchQuery.toLowerCase()))
-          .toList();
-    }
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() => _searchQuery = query);
+      _aplicarFiltros();
+    });
+  }
 
-    return filtrados;
+  void _onFiltroMusculoChanged(String? musculo) {
+    setState(() => _filtroMusculo = musculo);
+    _aplicarFiltros();
+  }
+
+  void _onFiltroEquipamentoChanged(String? equipamento) {
+    setState(() => _filtroEquipamento = equipamento);
+    _aplicarFiltros();
+  }
+
+  List<String> get _musculosFormatados {
+    if (_metadados == null) return ['Todos'];
+    return [
+      'Todos',
+      ..._metadados!.musculos.map((m) => _formatarNome(m)).toList(),
+    ];
+  }
+
+  List<String> get _equipamentosFormatados {
+    if (_metadados == null) return ['Todos'];
+    return [
+      'Todos',
+      ..._metadados!.equipamentos.map((e) => _formatarNome(e)).toList(),
+    ];
+  }
+
+  String _formatarNome(String nome) {
+    return nome
+        .split('-')
+        .map((palavra) => palavra[0].toUpperCase() + palavra.substring(1))
+        .join(' ');
+  }
+
+  String _reverterFormatacao(String nomeFormatado) {
+    return nomeFormatado.toLowerCase().replaceAll(' ', '-');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -149,7 +161,7 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();
-                          setState(() => _searchQuery = '');
+                          _onSearchChanged('');
                         },
                       )
                     : null,
@@ -160,60 +172,127 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
                 fillColor: Colors.grey.shade50,
               ),
               style: GoogleFonts.inter(),
-              onChanged: (value) {
-                setState(() => _searchQuery = value);
-              },
+              onChanged: _onSearchChanged,
             ),
           ),
 
-          // Filtro de grupos musculares
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _gruposMusculares.map((grupo) {
-                  final isSelected = _grupoSelecionado == grupo ||
-                      (_grupoSelecionado == null && grupo == 'Todos');
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(grupo),
-                      selected: isSelected,
-                      onSelected: (_) {
-                        setState(() {
-                          _grupoSelecionado = grupo == 'Todos' ? null : grupo;
-                        });
-                      },
-                      backgroundColor: Colors.grey.shade100,
-                      selectedColor: const Color(0xFF3B82F6),
-                      labelStyle: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : const Color(0xFF1E293B),
-                      ),
+          // Filtros
+          if (!_carregando || _metadados != null)
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Filtro de músculos
+                  Text(
+                    'Músculos',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade600,
                     ),
-                  );
-                }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _musculosFormatados.map((musculo) {
+                        final isSelected = (musculo == 'Todos' && _filtroMusculo == null) ||
+                            (_filtroMusculo != null && _formatarNome(_filtroMusculo!) == musculo);
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(musculo),
+                            selected: isSelected,
+                            onSelected: (_) {
+                              final filtro = musculo == 'Todos' ? null : _reverterFormatacao(musculo);
+                              _onFiltroMusculoChanged(filtro);
+                            },
+                            backgroundColor: Colors.grey.shade100,
+                            selectedColor: const Color(0xFF3B82F6),
+                            labelStyle: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Filtro de equipamentos
+                  Text(
+                    'Equipamentos',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _equipamentosFormatados.map((equipamento) {
+                        final isSelected = (equipamento == 'Todos' && _filtroEquipamento == null) ||
+                            (_filtroEquipamento != null && _formatarNome(_filtroEquipamento!) == equipamento);
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(equipamento),
+                            selected: isSelected,
+                            onSelected: (_) {
+                              final filtro = equipamento == 'Todos' ? null : _reverterFormatacao(equipamento);
+                              _onFiltroEquipamentoChanged(filtro);
+                            },
+                            backgroundColor: Colors.grey.shade100,
+                            selectedColor: const Color(0xFF10B981),
+                            labelStyle: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
 
           const Divider(height: 1),
 
           // Lista de exercícios
           Expanded(
             child: _carregando
-                ? const Center(child: CircularProgressIndicator())
-                : _exerciciosFiltrados.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Carregando exercícios...',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : _exercicios.isEmpty
                     ? _buildEmptyState()
                     : ListView.builder(
                         padding: const EdgeInsets.all(20),
-                        itemCount: _exerciciosFiltrados.length,
+                        itemCount: _exercicios.length,
                         itemBuilder: (context, index) {
-                          final exercicio = _exerciciosFiltrados[index];
+                          final exercicio = _exercicios[index];
                           return _buildExercicioCard(exercicio);
                         },
                       ),
@@ -224,35 +303,40 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 64,
-              color: Colors.grey.shade300,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Nenhum exercício encontrado',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 48,
+                color: Colors.grey.shade300,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tente ajustar os filtros ou a busca',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey.shade500,
+              const SizedBox(height: 12),
+              Text(
+                'Nenhum exercício encontrado',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                'Tente ajustar os filtros ou a busca',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.grey.shade500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -261,105 +345,160 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
   Widget _buildExercicioCard(ExercicioCatalogo exercicio) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _configurarExercicio(exercicio),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Ícone
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6).withOpacity(0.1),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: InkWell(
+          onTap: () => _mostrarDetalhesExercicio(exercicio),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Imagem do exercício
+                ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.fitness_center,
-                  color: Color(0xFF3B82F6),
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      exercicio.nome,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1E293B),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            exercicio.grupoMuscular,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
+                  child: exercicio.imagens.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: exercicio.imagens.first,
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 70,
+                            height: 70,
+                            color: Colors.grey.shade200,
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3B82F6).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.fitness_center,
+                              color: Color(0xFF3B82F6),
+                              size: 32,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3B82F6).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.fitness_center,
+                            color: Color(0xFF3B82F6),
+                            size: 32,
                           ),
                         ),
-                        if (exercicio.equipamento != null) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              exercicio.equipamento!,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 16),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        exercicio.nome,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          if (exercicio.primeiroMusculo.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3B82F6).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                exercicio.primeiroMusculo,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF3B82F6),
+                                ),
                               ),
                             ),
-                          ),
+                          if (exercicio.equipamento != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                exercicio.equipamentoFormatado,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // Botão adicionar
-              Icon(
-                Icons.add_circle_outline,
-                color: const Color(0xFF3B82F6),
-                size: 28,
-              ),
-            ],
+                const SizedBox(width: 12),
+                // Botão adicionar rápido
+                IconButton(
+                  onPressed: () => _configurarExercicio(exercicio),
+                  icon: const Icon(Icons.add_circle),
+                  color: const Color(0xFF3B82F6),
+                  iconSize: 32,
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _mostrarDetalhesExercicio(ExercicioCatalogo exercicio) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DetalhesExercicioModal(
+        exercicio: exercicio,
+        onAdicionar: () {
+          Navigator.pop(context);
+          _configurarExercicio(exercicio);
+        },
       ),
     );
   }
@@ -457,7 +596,7 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
               final exercicioParaFicha = ExercicioModel(
                 id: 'ex_${DateTime.now().millisecondsSinceEpoch}',
                 nome: exercicio.nome,
-                grupo_muscular: exercicio.grupoMuscular,
+                grupo_muscular: exercicio.primeiroMusculo,
                 series: series,
               );
 
@@ -483,6 +622,298 @@ class _BuscarExerciciosScreenState extends State<BuscarExerciciosScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+}
+
+// Widget do modal de detalhes
+class _DetalhesExercicioModal extends StatefulWidget {
+  final ExercicioCatalogo exercicio;
+  final VoidCallback onAdicionar;
+
+  const _DetalhesExercicioModal({
+    required this.exercicio,
+    required this.onAdicionar,
+  });
+
+  @override
+  State<_DetalhesExercicioModal> createState() => _DetalhesExercicioModalState();
+}
+
+class _DetalhesExercicioModalState extends State<_DetalhesExercicioModal> {
+  int _imagemAtualIndex = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Alterna entre as imagens a cada 2 segundos
+    if (widget.exercicio.imagens.length > 1) {
+      _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
+        setState(() {
+          _imagemAtualIndex = (_imagemAtualIndex + 1) % widget.exercicio.imagens.length;
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle do modal
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Conteúdo
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(0),
+                  children: [
+                    // Imagens alternando (efeito GIF)
+                    if (widget.exercicio.imagens.isNotEmpty)
+                      Container(
+                        height: 250,
+                        color: Colors.grey.shade100,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CachedNetworkImage(
+                              imageUrl: widget.exercicio.imagens[_imagemAtualIndex],
+                              width: double.infinity,
+                              height: 250,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: const Color(0xFF3B82F6).withOpacity(0.1),
+                                child: const Icon(
+                                  Icons.fitness_center,
+                                  size: 64,
+                                  color: Color(0xFF3B82F6),
+                                ),
+                              ),
+                            ),
+                            // Indicadores de imagem
+                            if (widget.exercicio.imagens.length > 1)
+                              Positioned(
+                                bottom: 12,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    widget.exercicio.imagens.length.clamp(0, 2),
+                                    (index) => Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _imagemAtualIndex == index
+                                            ? Colors.white
+                                            : Colors.white.withOpacity(0.5),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                    // Informações do exercício
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Nome
+                          Text(
+                            widget.exercicio.nome,
+                            style: GoogleFonts.inter(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Tags
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              if (widget.exercicio.primeiroMusculo.isNotEmpty)
+                                _buildTag(
+                                  widget.exercicio.primeiroMusculo,
+                                  const Color(0xFF3B82F6),
+                                  Icons.fitness_center,
+                                ),
+                              if (widget.exercicio.equipamento != null)
+                                _buildTag(
+                                  widget.exercicio.equipamentoFormatado,
+                                  const Color(0xFF10B981),
+                                  Icons.sports_gymnastics,
+                                ),
+                              if (widget.exercicio.nivel != null)
+                                _buildTag(
+                                  widget.exercicio.nivel!.toUpperCase(),
+                                  const Color(0xFFF59E0B),
+                                  Icons.signal_cellular_alt,
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Instruções
+                          if (widget.exercicio.instrucoes.isNotEmpty) ...[
+                            Text(
+                              'Como Executar',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...widget.exercicio.instrucoes.asMap().entries.map(
+                                  (entry) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF3B82F6),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '${entry.key + 1}',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            entry.value,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 14,
+                                              color: Colors.grey.shade700,
+                                              height: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            const SizedBox(height: 12),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Botão adicionar
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  child: ElevatedButton.icon(
+                    onPressed: widget.onAdicionar,
+                    icon: const Icon(Icons.add),
+                    label: Text(
+                      'Adicionar Exercício',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF3B82F6),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: const Size(double.infinity, 0),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTag(String label, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

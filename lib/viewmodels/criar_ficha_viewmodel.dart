@@ -175,19 +175,22 @@ class CriarFichaViewModel extends ChangeNotifier {
     if (_diaAtualIndex >= 0 && _diaAtualIndex < _diasTreino.length) {
       final dia = _diasTreino[_diaAtualIndex];
       final novosExercicios = List<ExercicioModel>.from(dia.exercicios);
-      
-      if (oldIndex < newIndex) {
-        newIndex -= 1;
+
+      // Validação de índices
+      if (oldIndex < 0 || oldIndex >= novosExercicios.length ||
+          newIndex < 0 || newIndex >= novosExercicios.length ||
+          oldIndex == newIndex) {
+        return;
       }
-      
+
       final exercicio = novosExercicios.removeAt(oldIndex);
       novosExercicios.insert(newIndex, exercicio);
-      
+
       // Atualiza as ordens
       for (int i = 0; i < novosExercicios.length; i++) {
         novosExercicios[i] = novosExercicios[i].copyWith(ordem: i);
       }
-      
+
       _diasTreino[_diaAtualIndex] = dia.copyWith(exercicios: novosExercicios);
       notifyListeners();
     }

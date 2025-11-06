@@ -111,30 +111,66 @@ class Passo3AdicionarExercicios extends StatelessWidget {
       return _buildEmptyState(context, viewModel);
     }
 
-    return ReorderableListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: exercicios.length + 1,
-      onReorder: (oldIndex, newIndex) {
-        if (newIndex > oldIndex) {
-          newIndex -= 1;
-        }
-        viewModel.reordenarExercicios(oldIndex, newIndex);
-      },
-      itemBuilder: (context, index) {
-        // Botão adicionar no final
-        if (index == exercicios.length) {
-          return _buildBotaoAdicionar(context, viewModel, key: const ValueKey('add'));
-        }
-
-        final exercicio = exercicios[index];
-        return _buildExercicioCard(
-          context,
-          viewModel,
-          exercicio,
-          index,
-          key: ValueKey(exercicio.id),
-        );
-      },
+    return Stack(
+      children: [
+        ListView.builder(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
+          itemCount: exercicios.length,
+          itemBuilder: (context, index) {
+            final exercicio = exercicios[index];
+            return _ExercicioCard(
+              key: ValueKey(exercicio.id),
+              exercicio: exercicio,
+              index: index,
+              viewModel: viewModel,
+              isFirst: index == 0,
+              isLast: index == exercicios.length - 1,
+              onDelete: () => _confirmarRemover(context, viewModel, index),
+            );
+          },
+        ),
+        // Botão flutuante no bottom
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F9FA),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _abrirBuscaExercicios(context, viewModel),
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    'Adicionar Exercício',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF3B82F6),
+                    side: const BorderSide(color: Color(0xFF3B82F6), width: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -203,173 +239,6 @@ class Passo3AdicionarExercicios extends StatelessWidget {
     );
   }
 
-  Widget _buildBotaoAdicionar(
-    BuildContext context,
-    CriarFichaViewModel viewModel, {
-    required Key key,
-  }) {
-    return Padding(
-      key: key,
-      padding: const EdgeInsets.only(top: 12),
-      child: OutlinedButton.icon(
-        onPressed: () => _abrirBuscaExercicios(context, viewModel),
-        icon: const Icon(Icons.add),
-        label: Text(
-          'Adicionar Exercício',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFF3B82F6),
-          side: const BorderSide(color: Color(0xFF3B82F6), width: 2),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExercicioCard(
-    BuildContext context,
-    CriarFichaViewModel viewModel,
-    dynamic exercicio,
-    int index, {
-    required Key key,
-  }) {
-    return Padding(
-      key: key,
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // Handle para reordenar
-                  Icon(
-                    Icons.drag_handle,
-                    color: Colors.grey.shade400,
-                  ),
-                  const SizedBox(width: 12),
-                  // Info do exercício
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          exercicio.nome,
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          exercicio.grupo_muscular ?? '',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Botão remover
-                  IconButton(
-                    onPressed: () => _confirmarRemover(context, viewModel, index),
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.red,
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            // Séries
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Séries',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1E293B),
-                        ),
-                      ),
-                      Text(
-                        '${exercicio.series.length} séries',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ...List.generate(exercicio.series.length, (serieIndex) {
-                    final serie = exercicio.series[serieIndex];
-                    final peso = serie.peso != null ? '${serie.peso}kg' : '-';
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Série ${serieIndex + 1}:',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                '${serie.repeticoes} reps • $peso',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: const Color(0xFF1E293B),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _abrirBuscaExercicios(
     BuildContext context,
     CriarFichaViewModel viewModel,
@@ -427,6 +296,216 @@ class Passo3AdicionarExercicios extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Widget de card de exercício com estado colapsável
+class _ExercicioCard extends StatefulWidget {
+  final dynamic exercicio;
+  final int index;
+  final CriarFichaViewModel viewModel;
+  final bool isFirst;
+  final bool isLast;
+  final VoidCallback onDelete;
+
+  const _ExercicioCard({
+    super.key,
+    required this.exercicio,
+    required this.index,
+    required this.viewModel,
+    required this.isFirst,
+    required this.isLast,
+    required this.onDelete,
+  });
+
+  @override
+  State<_ExercicioCard> createState() => _ExercicioCardState();
+}
+
+class _ExercicioCardState extends State<_ExercicioCard> {
+  bool _expandido = false;
+
+  void _moverParaCima() {
+    if (!widget.isFirst) {
+      widget.viewModel.reordenarExercicios(widget.index, widget.index - 1);
+    }
+  }
+
+  void _moverParaBaixo() {
+    if (!widget.isLast) {
+      widget.viewModel.reordenarExercicios(widget.index, widget.index + 1);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            InkWell(
+              onTap: () => setState(() => _expandido = !_expandido),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    // Info do exercício
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.exercicio.nome,
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                widget.exercicio.grupo_muscular ?? '',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '• ${widget.exercicio.series.length} séries',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Botões de reordenação
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: widget.isFirst ? null : _moverParaCima,
+                            icon: Icon(
+                              Icons.keyboard_arrow_up,
+                              color: widget.isFirst ? Colors.grey.shade300 : const Color(0xFF3B82F6),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: widget.isLast ? null : _moverParaBaixo,
+                            icon: Icon(
+                              Icons.keyboard_arrow_down,
+                              color: widget.isLast ? Colors.grey.shade300 : const Color(0xFF3B82F6),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 4),
+                    // Botão remover
+                    IconButton(
+                      onPressed: widget.onDelete,
+                      icon: const Icon(Icons.delete_outline),
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    // Ícone de expandir/colapsar
+                    Icon(
+                      _expandido ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: Colors.grey.shade600,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Séries (colapsável)
+            if (_expandido) ...[
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Séries',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...List.generate(widget.exercicio.series.length, (serieIndex) {
+                      final serie = widget.exercicio.series[serieIndex];
+                      final peso = serie.peso != null ? '${serie.peso}kg' : '-';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Série ${serieIndex + 1}:',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  '${serie.repeticoes} reps • $peso',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: const Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

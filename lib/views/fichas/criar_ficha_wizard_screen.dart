@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/criar_ficha_viewmodel.dart';
+import '../../viewmodels/ficha_viewmodel.dart';
 import 'wizard_steps/passo1_selecionar_dias.dart';
 import 'wizard_steps/passo2_nomear_dias.dart';
 import 'wizard_steps/passo3_adicionar_exercicios.dart';
@@ -226,34 +227,36 @@ class CriarFichaWizardScreen extends StatelessWidget {
           'Nomear Ficha',
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nomeController,
-              decoration: InputDecoration(
-                labelText: 'Nome da Ficha*',
-                hintText: 'Ex: Minha Ficha de Hipertrofia',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nomeController,
+                decoration: InputDecoration(
+                  labelText: 'Nome da Ficha*',
+                  hintText: 'Ex: Minha Ficha de Hipertrofia',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                style: GoogleFonts.inter(),
               ),
-              style: GoogleFonts.inter(),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descricaoController,
-              decoration: InputDecoration(
-                labelText: 'Descrição (opcional)',
-                hintText: 'Ex: Focado em ganho de massa',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descricaoController,
+                decoration: InputDecoration(
+                  labelText: 'Descrição (opcional)',
+                  hintText: 'Ex: Focado em ganho de massa',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                style: GoogleFonts.inter(),
+                maxLines: 3,
               ),
-              style: GoogleFonts.inter(),
-              maxLines: 3,
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -288,13 +291,20 @@ class CriarFichaWizardScreen extends StatelessWidget {
 
               if (context.mounted) {
                 if (sucesso) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Ficha criada com sucesso!'),
-                      backgroundColor: Color(0xFF10B981),
-                    ),
-                  );
-                  Navigator.pop(context); // Volta para FichasScreen
+                  // Recarrega as fichas
+                  final fichaViewModel = Provider.of<FichaViewModel>(context, listen: false);
+                  await fichaViewModel.carregarFichas(usuarioId);
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Ficha criada com sucesso!'),
+                        backgroundColor: Color(0xFF10B981),
+                      ),
+                    );
+                    // Volta para FichasScreen (fecha wizard e escolher ficha)
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
