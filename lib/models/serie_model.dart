@@ -10,14 +10,14 @@ class SerieModel {
   final DateTime? dataRealizacao;
 
   SerieModel({
-    required this.id,
+    String? id,
     required this.numeroSerie,
     required this.repeticoes,
     this.peso,
     this.observacao,
     this.concluida = false,
     this.dataRealizacao,
-  });
+  }) : id = id ?? 's$numeroSerie';
 
   factory SerieModel.fromMap(Map<String, dynamic> map, String id) {
     return SerieModel(

@@ -6,6 +6,7 @@ class FichaModel {
   final String usuarioId;
   final String nome;
   final String? descricao;
+  final String origem;
   final List<DiaTreinoModel> diasTreino;
   final bool ativa;
   final DateTime dataCriacao;
@@ -17,6 +18,7 @@ class FichaModel {
     required this.usuarioId,
     required this.nome,
     this.descricao,
+    this.origem = 'customizada',
     this.diasTreino = const [],
     this.ativa = true,
     required this.dataCriacao,
@@ -30,6 +32,7 @@ class FichaModel {
       usuarioId: map['usuario_id'] ?? '',
       nome: map['nome'] ?? '',
       descricao: map['descricao'],
+      origem: map['origem'] ?? 'customizada',
       diasTreino: (map['dias_treino'] as List<dynamic>?)
               ?.asMap()
               .entries
@@ -55,6 +58,7 @@ class FichaModel {
       'usuario_id': usuarioId,
       'nome': nome,
       'descricao': descricao,
+      'origem': origem,
       'dias_treino': diasTreino.map((d) => d.toMap()).toList(),
       'ativa': ativa,
       'data_criacao': Timestamp.fromDate(dataCriacao),
@@ -68,6 +72,7 @@ class FichaModel {
     String? usuarioId,
     String? nome,
     String? descricao,
+    String? origem,
     List<DiaTreinoModel>? diasTreino,
     bool? ativa,
     DateTime? dataCriacao,
@@ -79,6 +84,7 @@ class FichaModel {
       usuarioId: usuarioId ?? this.usuarioId,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
+      origem: origem ?? this.origem,
       diasTreino: diasTreino ?? this.diasTreino,
       ativa: ativa ?? this.ativa,
       dataCriacao: dataCriacao ?? this.dataCriacao,

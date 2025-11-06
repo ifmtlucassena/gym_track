@@ -9,6 +9,7 @@ import '../../widgets/motivational_card.dart';
 import '../../widgets/workout_today_card.dart';
 import '../../widgets/quick_stats_card.dart';
 import '../auth_screen.dart';
+import '../fichas/fichas_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = [
     const InicioPage(),
-    const FichasPage(),
+    const FichasScreen(),
     const SizedBox(),
     const EvolucaoPage(),
     const PerfilPage(),
@@ -204,10 +205,11 @@ class InicioPage extends StatelessWidget {
                         ),
                       );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Criar ficha em desenvolvimento'),
-                          duration: Duration(seconds: 2),
+                      // Navegar para escolher ficha
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FichasScreen(),
                         ),
                       );
                     }
@@ -335,25 +337,7 @@ class InicioPage extends StatelessWidget {
   }
 }
 
-class FichasPage extends StatelessWidget {
-  const FichasPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        title: const Text('Fichas de Treino'),
-      ),
-      body: const Center(
-        child: Text(
-          'Fichas em construção...',
-          style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-        ),
-      ),
-    );
-  }
-}
+// FichasPage removida - agora usando FichasScreen
 
 class EvolucaoPage extends StatelessWidget {
   const EvolucaoPage({super.key});

@@ -88,13 +88,65 @@ class FichaService {
 
       for (var doc in fichas.docs) {
         if (doc.id != fichaIdAtual) {
-          batch.update(doc.reference, {'ativa': false});
+          batch.update(doc.reference, {
+            'ativa': false,
+            'data_fim': FieldValue.serverTimestamp(),
+          });
         }
       }
 
       await batch.commit();
     } catch (e) {
       throw Exception('Erro ao desativar fichas anteriores: $e');
+    }
+  }
+
+  Future<void> ativarFicha(String fichaId, String usuarioId) async {
+    try {
+      // Primeiro desativa todas as fichas do usuário
+      await desativarTodasFichas(usuarioId);
+
+      // Depois ativa a ficha selecionada
+      await _firestore.collection(FirebaseConstants.fichas).doc(fichaId).update({
+        'ativa': true,
+        'data_inicio': FieldValue.serverTimestamp(),
+        'data_fim': null,
+      });
+    } catch (e) {
+      throw Exception('Erro ao ativar ficha: $e');
+    }
+  }
+
+  Future<void> desativarFicha(String fichaId) async {
+    try {
+      await _firestore.collection(FirebaseConstants.fichas).doc(fichaId).update({
+        'ativa': false,
+        'data_fim': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Erro ao desativar ficha: $e');
+    }
+  }
+
+  Future<void> desativarTodasFichas(String usuarioId) async {
+    try {
+      final batch = _firestore.batch();
+      final fichas = await _firestore
+          .collection(FirebaseConstants.fichas)
+          .where('usuario_id', isEqualTo: usuarioId)
+          .where('ativa', isEqualTo: true)
+          .get();
+
+      for (var doc in fichas.docs) {
+        batch.update(doc.reference, {
+          'ativa': false,
+          'data_fim': FieldValue.serverTimestamp(),
+        });
+      }
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Erro ao desativar todas as fichas: $e');
     }
   }
 }

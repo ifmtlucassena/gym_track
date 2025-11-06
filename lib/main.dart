@@ -5,6 +5,8 @@ import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/home_viewmodel.dart';
+import 'viewmodels/ficha_viewmodel.dart';
+import 'viewmodels/criar_ficha_viewmodel.dart';
 import 'views/splash_screen.dart';
 
 void main() async {
@@ -26,6 +28,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
+        ChangeNotifierProvider(create: (_) => FichaViewModel()),
+        ChangeNotifierProvider(create: (_) => CriarFichaViewModel()),
       ],
       child: MaterialApp(
         title: 'GymTrack',
