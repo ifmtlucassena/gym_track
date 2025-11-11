@@ -34,10 +34,8 @@ class AuthService {
 
       return usuario;
     } on FirebaseAuthException catch (e) {
-      // Propaga a exceção do Firebase para o ViewModel tratar
       throw e;
     } catch (e) {
-      // Qualquer outro erro
       throw Exception('Erro ao cadastrar: ${e.toString()}');
     }
   }
@@ -51,7 +49,6 @@ class AuthService {
 
       return await buscarUsuario(userCredential.user!.uid);
     } on FirebaseAuthException catch (e) {
-      // Propaga a exceção do Firebase para o ViewModel tratar
       throw e;
     } catch (e) {
       // Qualquer outro erro

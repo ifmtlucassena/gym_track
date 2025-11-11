@@ -123,11 +123,70 @@ class TreinoService {
       return query.count ?? 0;
     } catch (e) {
       // Se a collection não existir, retorna 0
-      if (e.toString().contains('failed-precondition') || 
+      if (e.toString().contains('failed-precondition') ||
           e.toString().contains('index')) {
         return 0;
       }
       throw Exception('Erro ao contar treinos: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>?> buscarUltimoTreinoPorExercicio(
+    String usuarioId,
+    String exercicioId,
+  ) async {
+    try {
+      final query = await _firestore
+          .collection(FirebaseConstants.treinos)
+          .where('usuario_id', isEqualTo: usuarioId)
+          .orderBy('data_fim', descending: true)
+          .limit(10)
+          .get();
+
+      for (var doc in query.docs) {
+        final data = doc.data();
+        final exercicios = data['exercicios'] as List<dynamic>? ?? [];
+
+        for (var exercicio in exercicios) {
+          if (exercicio['exercicioId'] == exercicioId) {
+            final series = exercicio['series'] as List<dynamic>? ?? [];
+            if (series.isEmpty) continue;
+
+            // Calcular estatísticas
+            int totalSeries = series.length;
+            int totalReps = 0;
+            double totalPeso = 0;
+            int seriesComPeso = 0;
+
+            for (var serie in series) {
+              totalReps += (serie['repeticoes'] ?? 0) as int;
+              final peso = serie['peso_kg'];
+              if (peso != null) {
+                totalPeso += (peso as num).toDouble();
+                seriesComPeso++;
+              }
+            }
+
+            final mediaReps = totalSeries > 0 ? totalReps ~/ totalSeries : 0;
+            final mediaPeso = seriesComPeso > 0 ? totalPeso / seriesComPeso : 0;
+
+            return {
+              'total_series': totalSeries,
+              'media_reps': mediaReps,
+              'media_peso_kg': mediaPeso,
+              'data_treino': data['data_fim'],
+            };
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      if (e.toString().contains('failed-precondition') ||
+          e.toString().contains('index')) {
+        return null;
+      }
+      throw Exception('Erro ao buscar último treino por exercício: $e');
     }
   }
 }

@@ -11,6 +11,8 @@ class TreinoRealizadoModel {
   final DateTime dataFim;
   final List<ExercicioModel> exercicios;
   final int duracaoMinutos;
+  final double volumeTotalKg;
+  final double? pesoCorporal;
   final String? observacao;
 
   TreinoRealizadoModel({
@@ -23,6 +25,8 @@ class TreinoRealizadoModel {
     required this.dataFim,
     this.exercicios = const [],
     required this.duracaoMinutos,
+    this.volumeTotalKg = 0,
+    this.pesoCorporal,
     this.observacao,
   });
 
@@ -47,6 +51,8 @@ class TreinoRealizadoModel {
               .toList() ??
           [],
       duracaoMinutos: map['duracao_minutos'] ?? 0,
+      volumeTotalKg: (map['volume_total_kg'] ?? 0).toDouble(),
+      pesoCorporal: map['peso_corporal']?.toDouble(),
       observacao: map['observacao'],
     );
   }
@@ -61,6 +67,8 @@ class TreinoRealizadoModel {
       'data_fim': Timestamp.fromDate(dataFim),
       'exercicios': exercicios.map((e) => e.toMap()).toList(),
       'duracao_minutos': duracaoMinutos,
+      'volume_total_kg': volumeTotalKg,
+      'peso_corporal': pesoCorporal,
       'observacao': observacao,
     };
   }
@@ -75,6 +83,8 @@ class TreinoRealizadoModel {
     DateTime? dataFim,
     List<ExercicioModel>? exercicios,
     int? duracaoMinutos,
+    double? volumeTotalKg,
+    double? pesoCorporal,
     String? observacao,
   }) {
     return TreinoRealizadoModel(
@@ -87,6 +97,8 @@ class TreinoRealizadoModel {
       dataFim: dataFim ?? this.dataFim,
       exercicios: exercicios ?? this.exercicios,
       duracaoMinutos: duracaoMinutos ?? this.duracaoMinutos,
+      volumeTotalKg: volumeTotalKg ?? this.volumeTotalKg,
+      pesoCorporal: pesoCorporal ?? this.pesoCorporal,
       observacao: observacao ?? this.observacao,
     );
   }

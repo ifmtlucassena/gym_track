@@ -10,6 +10,7 @@ import '../../widgets/workout_today_card.dart';
 import '../../widgets/quick_stats_card.dart';
 import '../auth_screen.dart';
 import '../fichas/fichas_screen.dart';
+import '../treino/registrar_treino_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -44,8 +45,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (index == 2) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const RegistrarTreinoPage()),
-      );
+        MaterialPageRoute(builder: (_) => const RegistrarTreinoScreen()),
+      ).then((_) {
+        // Recarregar dados ao voltar
+        final authViewModel = context.read<AuthViewModel>();
+        if (authViewModel.usuario != null) {
+          context.read<HomeViewModel>().refresh(authViewModel.usuario!.id);
+        }
+      });
       return;
     }
     setState(() {
@@ -201,9 +208,15 @@ class InicioPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const RegistrarTreinoPage(),
+                          builder: (_) => const RegistrarTreinoScreen(),
                         ),
-                      );
+                      ).then((_) {
+                        // Recarregar dados ao voltar
+                        final authViewModel = context.read<AuthViewModel>();
+                        if (authViewModel.usuario != null) {
+                          homeViewModel.refresh(authViewModel.usuario!.id);
+                        }
+                      });
                     } else {
                       // Navegar para escolher ficha
                       Navigator.push(
@@ -424,22 +437,3 @@ class PerfilPage extends StatelessWidget {
   }
 }
 
-class RegistrarTreinoPage extends StatelessWidget {
-  const RegistrarTreinoPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        title: const Text('Registrar Treino'),
-      ),
-      body: const Center(
-        child: Text(
-          'Registrar treino em construção...',
-          style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-        ),
-      ),
-    );
-  }
-}

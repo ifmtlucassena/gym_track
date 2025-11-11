@@ -70,7 +70,6 @@ class HomeViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      // Apenas mostra erro se for um erro real, não falta de dados
       if (!e.toString().contains('failed-precondition') && 
           !e.toString().contains('index')) {
         _error = 'Erro ao carregar dados. Tente novamente.';
