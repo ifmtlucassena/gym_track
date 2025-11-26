@@ -19,6 +19,9 @@ class AuthService {
         password: senha,
       );
 
+      // Pequeno delay para garantir que o Auth propagou o token antes de escrever no Firestore
+      await Future.delayed(const Duration(milliseconds: 500));
+
       final usuario = UsuarioModel(
         id: userCredential.user!.uid,
         nome: nome,
@@ -34,8 +37,10 @@ class AuthService {
 
       return usuario;
     } on FirebaseAuthException catch (e) {
+      print('FirebaseAuthException no cadastro: ${e.code} - ${e.message}');
       throw e;
     } catch (e) {
+      print('Erro genérico no cadastro: $e');
       throw Exception('Erro ao cadastrar: ${e.toString()}');
     }
   }
@@ -49,39 +54,74 @@ class AuthService {
 
       return await buscarUsuario(userCredential.user!.uid);
     } on FirebaseAuthException catch (e) {
+      print('FirebaseAuthException no login: ${e.code} - ${e.message}');
       throw e;
     } catch (e) {
-      // Qualquer outro erro
+      print('Erro genérico no login: $e');
       throw Exception('Erro ao fazer login: ${e.toString()}');
     }
   }
 
   Future<UsuarioModel?> loginComGoogle() async {
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null;
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-    final userCredential = await _auth.signInWithCredential(credential);
-    final uid = userCredential.user!.uid;
+      final userCredential = await _auth.signInWithCredential(credential);
+      final uid = userCredential.user!.uid;
 
-    final usuarioExiste = await _firestore
-        .collection(FirebaseConstants.usuarios)
-        .doc(uid)
-        .get();
+      // Delay para garantir propagação do token
+      await Future.delayed(const Duration(milliseconds: 500));
 
-    if (!usuarioExiste.exists) {
+      final usuarioExiste = await _firestore
+          .collection(FirebaseConstants.usuarios)
+          .doc(uid)
+          .get();
+
+      if (!usuarioExiste.exists) {
+        final usuario = UsuarioModel(
+          id: uid,
+          nome: userCredential.user!.displayName,
+          email: userCredential.user!.email,
+          fotoUrl: userCredential.user!.photoURL,
+          dataCadastro: DateTime.now(),
+          isAnonimo: false,
+        );
+
+        await _firestore
+            .collection(FirebaseConstants.usuarios)
+            .doc(uid)
+            .set(usuario.toFirestore());
+
+        return usuario;
+      }
+
+      return await buscarUsuario(uid);
+    } catch (e) {
+      print('Erro no login com Google: $e');
+      throw Exception('Erro ao fazer login com Google: ${e.toString()}');
+    }
+  }
+
+  Future<UsuarioModel?> loginAnonimo() async {
+    try {
+      final userCredential = await _auth.signInAnonymously();
+      final uid = userCredential.user!.uid;
+
+      // Delay para garantir propagação do token
+      await Future.delayed(const Duration(milliseconds: 500));
+
       final usuario = UsuarioModel(
         id: uid,
-        nome: userCredential.user!.displayName,
-        email: userCredential.user!.email,
-        fotoUrl: userCredential.user!.photoURL,
+        nome: 'Visitante',
         dataCadastro: DateTime.now(),
-        isAnonimo: false,
+        isAnonimo: true,
       );
 
       await _firestore
@@ -90,28 +130,10 @@ class AuthService {
           .set(usuario.toFirestore());
 
       return usuario;
+    } catch (e) {
+      print('Erro no login anônimo: $e');
+      throw Exception('Erro ao entrar como visitante: ${e.toString()}');
     }
-
-    return await buscarUsuario(uid);
-  }
-
-  Future<UsuarioModel?> loginAnonimo() async {
-    final userCredential = await _auth.signInAnonymously();
-    final uid = userCredential.user!.uid;
-
-    final usuario = UsuarioModel(
-      id: uid,
-      nome: 'Visitante',
-      dataCadastro: DateTime.now(),
-      isAnonimo: true,
-    );
-
-    await _firestore
-        .collection(FirebaseConstants.usuarios)
-        .doc(uid)
-        .set(usuario.toFirestore());
-
-    return usuario;
   }
 
   Future<UsuarioModel?> buscarUsuario(String uid) async {

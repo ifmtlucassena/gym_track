@@ -21,28 +21,38 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _init() async {
-    final authViewModel = context.read<AuthViewModel>();
-    await authViewModel.verificarUsuarioLogado();
+    try {
+      final authViewModel = context.read<AuthViewModel>();
+      await authViewModel.verificarUsuarioLogado();
 
-    await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (authViewModel.isLogado) {
-      final usuario = authViewModel.usuario!;
-      if (usuario.onboardingCompleto) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
+      if (authViewModel.isLogado) {
+        final usuario = authViewModel.usuario!;
+        if (usuario.onboardingCompleto) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          );
+        }
       } else {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          MaterialPageRoute(builder: (_) => const AuthScreen()),
         );
       }
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AuthScreen()),
-      );
+    } catch (e) {
+      print('Erro na inicialização: $e');
+      // Se der erro, manda para o login por segurança
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AuthScreen()),
+        );
+      }
     }
   }
 
@@ -62,14 +72,14 @@ class _SplashScreenState extends State<SplashScreen> {
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.fitness_center,
                 size: 60,
                 color: AppColors.white,
               ),
             ),
-            SizedBox(height: 32),
-            Text(
+            const SizedBox(height: 32),
+            const Text(
               'GymTrack',
               style: TextStyle(
                 fontSize: 36,
@@ -77,16 +87,16 @@ class _SplashScreenState extends State<SplashScreen> {
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(height: 12),
-            Text(
+            const SizedBox(height: 12),
+            const Text(
               'Sua evolução começa aqui',
               style: TextStyle(
                 fontSize: 16,
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: 48),
-            CircularProgressIndicator(
+            const SizedBox(height: 48),
+            const CircularProgressIndicator(
               color: AppColors.primary,
             ),
           ],

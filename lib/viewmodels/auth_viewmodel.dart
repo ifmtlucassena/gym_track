@@ -24,6 +24,7 @@ class AuthViewModel extends ChangeNotifier {
       _usuario = await _authService.cadastrarComEmail(email, senha, nome);
       return true;
     } catch (e) {
+      print('AuthViewModel Error (cadastrar): $e');
       _error = _tratarErro(e);
       return false;
     } finally {
@@ -41,6 +42,7 @@ class AuthViewModel extends ChangeNotifier {
       _usuario = await _authService.loginComEmail(email, senha);
       return true;
     } catch (e) {
+      print('AuthViewModel Error (login): $e');
       _error = _tratarErro(e);
       return false;
     } finally {
@@ -58,6 +60,7 @@ class AuthViewModel extends ChangeNotifier {
       _usuario = await _authService.loginComGoogle();
       return _usuario != null;
     } catch (e) {
+      print('AuthViewModel Error (loginComGoogle): $e');
       _error = _tratarErro(e);
       return false;
     } finally {
@@ -75,6 +78,7 @@ class AuthViewModel extends ChangeNotifier {
       _usuario = await _authService.loginAnonimo();
       return true;
     } catch (e) {
+      print('AuthViewModel Error (loginAnonimo): $e');
       _error = _tratarErro(e);
       return false;
     } finally {
@@ -86,8 +90,14 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> verificarUsuarioLogado() async {
     final currentUser = _authService.currentUser;
     if (currentUser != null) {
-      _usuario = await _authService.buscarUsuario(currentUser.uid);
-      notifyListeners();
+      try {
+        _usuario = await _authService.buscarUsuario(currentUser.uid);
+        notifyListeners();
+      } catch (e) {
+        print('Erro ao verificar usuário logado: $e');
+        // Se falhar ao buscar usuário (ex: permissão), faz logout para limpar estado
+        await logout();
+      }
     }
   }
 
