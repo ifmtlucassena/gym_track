@@ -4,6 +4,8 @@ import '../../models/ficha_model.dart';
 import '../../models/dia_treino_model.dart';
 import 'preview_exercicios_screen.dart';
 
+import 'package:intl/intl.dart';
+
 class SelecionarTreinoScreen extends StatefulWidget {
   final FichaModel ficha;
   final DateTime? dataTreino;
@@ -21,6 +23,10 @@ class SelecionarTreinoScreen extends StatefulWidget {
 class _SelecionarTreinoScreenState extends State<SelecionarTreinoScreen> {
   DiaTreinoModel? _treinoSelecionado;
 
+  String _formatDate(DateTime date) {
+    return DateFormat("EEEE, d 'de' MMMM", 'pt_BR').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,8 +42,19 @@ class _SelecionarTreinoScreenState extends State<SelecionarTreinoScreen> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
+                if (widget.dataTreino != null) ...[
+                  Text(
+                    'Treino de ${_formatDate(widget.dataTreino!)}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 const Text(
-                  'Qual treino você vai fazer?',
+                  'Qual treino você fez?',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

@@ -31,7 +31,15 @@ class ExecutarTreinoViewModel extends ChangeNotifier {
     _dataInicio = dataTreino;
     _exercicios = List.from(diaTreino.exercicios);
     _inicializarSeries();
-    _iniciarTimer();
+    
+    final now = DateTime.now();
+    final isToday = dataTreino.year == now.year && 
+                    dataTreino.month == now.month && 
+                    dataTreino.day == now.day;
+                    
+    if (isToday) {
+      _iniciarTimer();
+    }
   }
 
   // Getters

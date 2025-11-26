@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/ficha_model.dart';
 import '../../models/dia_treino_model.dart';
@@ -39,6 +40,17 @@ class _ExecutarTreinoScreenState extends State<ExecutarTreinoScreen> {
   ExercicioCatalogo? _exercicioCatalogo;
   int _imagemAtualIndex = 0;
   Timer? _timerImagem;
+
+  String _formatDate(DateTime date) {
+    return DateFormat("dd/MM/yyyy", 'pt_BR').format(date);
+  }
+
+  bool get _isTreinoPassado {
+    final now = DateTime.now();
+    return widget.dataTreino.year != now.year ||
+        widget.dataTreino.month != now.month ||
+        widget.dataTreino.day != now.day;
+  }
 
   // Controllers para os inputs
   final Map<String, Map<String, TextEditingController>> _controllers = {};
@@ -182,14 +194,29 @@ class _ExecutarTreinoScreenState extends State<ExecutarTreinoScreen> {
                   Padding(
                     padding: const EdgeInsets.only(right: 16),
                     child: Center(
-                      child: Text(
-                        viewModel.tempoDecorrido,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
+                      child: _isTreinoPassado
+                          ? Row(
+                              children: [
+                                const Icon(Icons.calendar_today, size: 16, color: AppColors.textPrimary),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatDate(widget.dataTreino),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              viewModel.tempoDecorrido,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -718,13 +745,14 @@ class _ExecutarTreinoScreenState extends State<ExecutarTreinoScreen> {
         builder: (_) => FinalizarTreinoScreen(
           ficha: widget.ficha,
           diaTreino: widget.diaTreino,
-          dataInicio: _viewModel.dataInicio,
-          dataFim: DateTime.now(),
+          dataInicio: widget.dataTreino, // Use dataTreino as start date
+          dataFim: _isTreinoPassado ? widget.dataTreino : DateTime.now(), // Use dataTreino for past workouts initially
           usuarioId: authViewModel.usuario!.id,
           exercicios: exerciciosFinalizados,
-          tempoDecorrido: _viewModel.tempoDecorrido,
+          tempoDecorrido: _isTreinoPassado ? '00:00' : _viewModel.tempoDecorrido, // Placeholder for past
           exerciciosConcluidos: _viewModel.contarExerciciosConcluidos(),
           volumeTotal: _viewModel.calcularVolumeTotalKg(),
+          isTreinoPassado: _isTreinoPassado, // Pass flag
         ),
       ),
     );

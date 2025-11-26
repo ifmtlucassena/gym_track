@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/ficha_model.dart';
 import '../../models/dia_treino_model.dart';
@@ -17,6 +18,7 @@ class FinalizarTreinoScreen extends StatefulWidget {
   final String tempoDecorrido;
   final int exerciciosConcluidos;
   final double volumeTotal;
+  final bool isTreinoPassado; // New parameter
 
   const FinalizarTreinoScreen({
     super.key,
@@ -29,6 +31,7 @@ class FinalizarTreinoScreen extends StatefulWidget {
     required this.tempoDecorrido,
     required this.exerciciosConcluidos,
     required this.volumeTotal,
+    this.isTreinoPassado = false, // Default to false
   });
 
   @override
@@ -39,13 +42,28 @@ class _FinalizarTreinoScreenState extends State<FinalizarTreinoScreen> {
   final TreinoService _treinoService = TreinoService();
   final TextEditingController _pesoCorporalController = TextEditingController();
   final TextEditingController _observacoesController = TextEditingController();
+  final TextEditingController _duracaoController = TextEditingController(); // New controller
   bool _isSalvando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isTreinoPassado) {
+      // Suggest estimated duration or 60 min
+      _duracaoController.text = widget.diaTreino.duracaoEstimada.toString();
+    }
+  }
 
   @override
   void dispose() {
     _pesoCorporalController.dispose();
     _observacoesController.dispose();
+    _duracaoController.dispose();
     super.dispose();
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat("dd/MM/yyyy", 'pt_BR').format(date);
   }
 
   @override
@@ -82,6 +100,19 @@ class _FinalizarTreinoScreenState extends State<FinalizarTreinoScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
+              if (widget.isTreinoPassado)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Data: ${_formatDate(widget.dataInicio)}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               const SizedBox(height: 8),
               const Text(
                 'Mais um passo rumo ao seu objetivo',
@@ -95,11 +126,47 @@ class _FinalizarTreinoScreenState extends State<FinalizarTreinoScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildMetricCard(
-                    icon: Icons.timer,
-                    label: 'Duração',
-                    value: duracaoMinutos,
-                  ),
+                  widget.isTreinoPassado
+                      ? Expanded(
+                          child: Column(
+                            children: [
+                              const Icon(Icons.timer, size: 24, color: AppColors.secondary),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: 80,
+                                child: TextField(
+                                  controller: _duracaoController,
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                  decoration: const InputDecoration(
+                                    suffixText: 'min',
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Duração',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _buildMetricCard(
+                          icon: Icons.timer,
+                          label: 'Duração',
+                          value: duracaoMinutos,
+                        ),
                   _buildMetricCard(
                     icon: Icons.fitness_center,
                     label: 'Exercícios',
@@ -242,7 +309,17 @@ class _FinalizarTreinoScreenState extends State<FinalizarTreinoScreen> {
           ? _observacoesController.text
           : null;
 
-      final duracaoMinutos = widget.dataFim.difference(widget.dataInicio).inMinutes;
+      int duracaoMinutosInt;
+      DateTime dataFimFinal;
+
+      if (widget.isTreinoPassado) {
+        duracaoMinutosInt = int.tryParse(_duracaoController.text) ?? widget.diaTreino.duracaoEstimada;
+        // Calculate dataFim based on dataInicio + duration
+        dataFimFinal = widget.dataInicio.add(Duration(minutes: duracaoMinutosInt));
+      } else {
+        duracaoMinutosInt = widget.dataFim.difference(widget.dataInicio).inMinutes;
+        dataFimFinal = widget.dataFim;
+      }
 
       final treino = TreinoRealizadoModel(
         id: '',
@@ -251,9 +328,9 @@ class _FinalizarTreinoScreenState extends State<FinalizarTreinoScreen> {
         diaTreinoId: widget.diaTreino.id,
         nomeTreino: widget.diaTreino.nome,
         dataInicio: widget.dataInicio,
-        dataFim: widget.dataFim,
+        dataFim: dataFimFinal,
         exercicios: widget.exercicios,
-        duracaoMinutos: duracaoMinutos,
+        duracaoMinutos: duracaoMinutosInt,
         volumeTotalKg: widget.volumeTotal,
         pesoCorporal: pesoCorporal,
         observacao: observacao,

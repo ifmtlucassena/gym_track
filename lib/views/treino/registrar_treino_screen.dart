@@ -53,9 +53,9 @@ class _RegistrarTreinoScreenState extends State<RegistrarTreinoScreen> {
     if (tipoTreino == 'passado') {
       dataTreino = await showDatePicker(
         context: context,
-        initialDate: DateTime.now().subtract(const Duration(days: 1)),
-        firstDate: DateTime.now().subtract(const Duration(days: 30)),
-        lastDate: DateTime.now().subtract(const Duration(days: 1)),
+        initialDate: DateTime.now(),
+        firstDate: DateTime.now().subtract(const Duration(days: 90)),
+        lastDate: DateTime.now(),
         locale: const Locale('pt', 'BR'),
       );
 
