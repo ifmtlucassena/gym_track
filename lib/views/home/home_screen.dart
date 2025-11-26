@@ -11,6 +11,7 @@ import '../../widgets/quick_stats_card.dart';
 import '../auth_screen.dart';
 import '../fichas/fichas_screen.dart';
 import '../treino/registrar_treino_screen.dart';
+import '../evolucao/evolucao_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const InicioPage(),
     const FichasScreen(),
     const SizedBox(),
-    const EvolucaoPage(),
+    const EvolucaoScreen(),
     const PerfilPage(),
   ];
 
@@ -350,28 +351,6 @@ class InicioPage extends StatelessWidget {
   }
 }
 
-// FichasPage removida - agora usando FichasScreen
-
-class EvolucaoPage extends StatelessWidget {
-  const EvolucaoPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        title: const Text('Evolução'),
-      ),
-      body: const Center(
-        child: Text(
-          'Evolução em construção...',
-          style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-        ),
-      ),
-    );
-  }
-}
-
 class PerfilPage extends StatelessWidget {
   const PerfilPage({super.key});
 
@@ -436,4 +415,3 @@ class PerfilPage extends StatelessWidget {
     );
   }
 }
-

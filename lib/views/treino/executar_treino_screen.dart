@@ -646,8 +646,15 @@ class _ExecutarTreinoScreenState extends State<ExecutarTreinoScreen> {
                 fillColor: AppColors.white,
               ),
               onChanged: (value) {
-                final peso = double.tryParse(value);
-                viewModel.atualizarSerie(index, pesoKg: peso);
+                // Replace comma with dot for parsing
+                final normalizedValue = value.replaceAll(',', '.');
+                
+                if (normalizedValue.isEmpty) {
+                   viewModel.atualizarSerie(index, forceNullPeso: true);
+                } else {
+                   final peso = double.tryParse(normalizedValue);
+                   viewModel.atualizarSerie(index, pesoKg: peso);
+                }
               },
             ),
           ),

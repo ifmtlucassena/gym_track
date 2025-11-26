@@ -8,6 +8,7 @@ import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/home_viewmodel.dart';
 import 'viewmodels/ficha_viewmodel.dart';
 import 'viewmodels/criar_ficha_viewmodel.dart';
+import 'viewmodels/evolucao_viewmodel.dart';
 import 'views/splash_screen.dart';
 import 'package:gym_track/services/auth_service.dart';
 
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => FichaViewModel()),
         ChangeNotifierProvider(create: (_) => CriarFichaViewModel()),
+        ChangeNotifierProvider(create: (_) => EvolucaoViewModel()),
       ],
       child: MaterialApp(
         title: 'GymTrack',

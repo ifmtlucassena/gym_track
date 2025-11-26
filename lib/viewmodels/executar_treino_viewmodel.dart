@@ -84,12 +84,37 @@ class ExecutarTreinoViewModel extends ChangeNotifier {
     return '${horas.toString().padLeft(2, '0')}:${minutos.toString().padLeft(2, '0')}:${segs.toString().padLeft(2, '0')}';
   }
 
-  void atualizarSerie(int indexSerie, {int? repeticoes, double? pesoKg}) {
+  void atualizarSerie(int indexSerie, {int? repeticoes, double? pesoKg, bool forceNullPeso = false}) {
     final series = List<SerieModel>.from(seriesAtual);
+    
+    double? novoPeso;
+    if (forceNullPeso) {
+      novoPeso = null;
+    } else {
+      novoPeso = pesoKg ?? series[indexSerie].pesoKg;
+    }
+
     series[indexSerie] = series[indexSerie].copyWith(
       repeticoes: repeticoes ?? series[indexSerie].repeticoes,
-      pesoKg: pesoKg ?? series[indexSerie].pesoKg,
+      pesoKg: novoPeso,
     );
+    
+    if (forceNullPeso) {
+       series[indexSerie] = SerieModel(
+          id: series[indexSerie].id,
+          numeroSerie: series[indexSerie].numeroSerie,
+          repeticoes: series[indexSerie].repeticoes, // Keep reps
+          pesoKg: null, // Clear weight
+          observacao: series[indexSerie].observacao,
+       );
+    } else {
+       // Normal update
+       series[indexSerie] = series[indexSerie].copyWith(
+          repeticoes: repeticoes ?? series[indexSerie].repeticoes,
+          pesoKg: pesoKg ?? series[indexSerie].pesoKg,
+       );
+    }
+
     _seriesPorExercicio[exercicioAtual.id] = series;
     notifyListeners();
   }
