@@ -12,6 +12,7 @@ import '../auth_screen.dart';
 import '../fichas/fichas_screen.dart';
 import '../treino/registrar_treino_screen.dart';
 import '../evolucao/evolucao_screen.dart';
+import '../perfil/perfil_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -351,67 +352,13 @@ class InicioPage extends StatelessWidget {
   }
 }
 
+
+
 class PerfilPage extends StatelessWidget {
   const PerfilPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = context.watch<AuthViewModel>();
-    final usuario = authViewModel.usuario;
-
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        title: const Text('Perfil'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: AppColors.primary,
-              child: Text(
-                usuario?.nome?.substring(0, 1).toUpperCase() ?? 'U',
-                style: const TextStyle(
-                  fontSize: 36,
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              usuario?.nome ?? 'Usuário',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              usuario?.email ?? '',
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () async {
-                await authViewModel.logout();
-                if (context.mounted) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const AuthScreen()),
-                  );
-                }
-              },
-              icon: const Icon(Icons.logout),
-              label: const Text('Sair'),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const PerfilScreen();
   }
 }
