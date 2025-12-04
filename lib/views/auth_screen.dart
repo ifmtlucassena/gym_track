@@ -63,24 +63,6 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _loginComGoogle() async {
-    final authViewModel = context.read<AuthViewModel>();
-    final success = await authViewModel.loginComGoogle();
-
-    if (!mounted) return;
-
-    if (success) {
-      final usuario = authViewModel.usuario!;
-      if (usuario.onboardingCompleto) {
-        Navigator.of(context).pushReplacementNamed('/home');
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-        );
-      }
-    }
-  }
-
   Future<void> _loginAnonimo() async {
     final authViewModel = context.read<AuthViewModel>();
     final success = await authViewModel.loginAnonimo();
@@ -194,29 +176,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: AppColors.divider)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'OU',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: AppColors.divider)),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  onPressed: _loginComGoogle,
-                  icon: const Text('G', style: TextStyle(fontSize: 20)),
-                  label: const Text('Continuar com Google'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 TextButton(
                   onPressed: _loginAnonimo,
                   child: const Text(

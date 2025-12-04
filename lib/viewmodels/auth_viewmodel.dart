@@ -51,24 +51,6 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> loginComGoogle() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      _usuario = await _authService.loginComGoogle();
-      return _usuario != null;
-    } catch (e) {
-      print('AuthViewModel Error (loginComGoogle): $e');
-      _error = _tratarErro(e);
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
   Future<bool> loginAnonimo() async {
     _isLoading = true;
     _error = null;

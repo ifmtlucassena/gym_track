@@ -112,28 +112,7 @@ class _MigracaoModalState extends State<MigracaoModal> {
             label: const Text('Continuar com Email'),
           ),
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: OutlinedButton.icon(
-            onPressed: () async {
-              // TODO: Implementar Google Sign In
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Login com Google em breve')),
-              );
-            },
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.divider),
-              foregroundColor: AppColors.textPrimary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: const Icon(Icons.g_mobiledata, size: 28),
-            label: const Text('Continuar com Google'),
-          ),
-        ),
+
         const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(12),
