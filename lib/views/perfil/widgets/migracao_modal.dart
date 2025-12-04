@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../viewmodels/perfil_viewmodel.dart';
+import '../../../viewmodels/auth_viewmodel.dart';
 
 class MigracaoModal extends StatefulWidget {
   const MigracaoModal({super.key});
@@ -230,6 +231,11 @@ class _MigracaoModalState extends State<MigracaoModal> {
                         
                         if (mounted) {
                           if (success) {
+                            // Atualizar o AuthViewModel com o novo usuário
+                            if (viewModel.usuario != null) {
+                              context.read<AuthViewModel>().atualizarUsuario(viewModel.usuario!);
+                            }
+                            
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(

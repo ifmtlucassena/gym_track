@@ -6,7 +6,6 @@ import '../../../viewmodels/auth_viewmodel.dart';
 import 'widgets/perfil_header.dart';
 import 'widgets/estatisticas_section.dart';
 import 'widgets/dados_pessoais_section.dart';
-import 'widgets/configuracoes_section.dart';
 import 'widgets/sobre_section.dart';
 
 class PerfilScreen extends StatefulWidget {
@@ -55,8 +54,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   const EstatisticasSection(),
                   const SizedBox(height: 24),
                   const DadosPessoaisSection(),
-                  const SizedBox(height: 24),
-                  const ConfiguracoesSection(),
                   const SizedBox(height: 24),
                   const SobreSection(),
                   const SizedBox(height: 32),

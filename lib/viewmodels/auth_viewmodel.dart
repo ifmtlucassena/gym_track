@@ -90,6 +90,12 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Atualiza o usuário no AuthViewModel (usado após migração de conta anônima)
+  void atualizarUsuario(UsuarioModel novoUsuario) {
+    _usuario = novoUsuario;
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     await _authService.logout();
     _usuario = null;

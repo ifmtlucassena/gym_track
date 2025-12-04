@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 
 class SobreSection extends StatefulWidget {
@@ -54,35 +53,93 @@ class _SobreSectionState extends State<SobreSection> {
                   title: const Text('Versão do App', style: TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(_version, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ),
-                const Divider(height: 1),
-                _buildLinkItem(
-                  context,
-                  'Termos de Uso',
-                  Icons.description_outlined,
-                  () => _launchUrl('https://gymtrack.com/terms'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Seção de créditos
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(0.1),
+                  AppColors.secondary.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+            ),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.fitness_center,
+                  size: 40,
+                  color: AppColors.primary,
                 ),
-                const Divider(height: 1),
-                _buildLinkItem(
-                  context,
-                  'Política de Privacidade',
-                  Icons.privacy_tip_outlined,
-                  () => _launchUrl('https://gymtrack.com/privacy'),
+                const SizedBox(height: 12),
+                Text(
+                  'GymTrack',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
-                const Divider(height: 1),
-                _buildLinkItem(
-                  context,
-                  'Fale Conosco',
-                  Icons.chat_bubble_outline,
-                  () => _launchUrl('mailto:contato@gymtrack.com'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Desenvolvido por:',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-                const Divider(height: 1),
-                _buildLinkItem(
-                  context,
-                  'Avaliar o App',
-                  Icons.star_outline,
-                  () {
-                    // TODO: Implementar link da loja
-                  },
+                const SizedBox(height: 4),
+                const Text(
+                  'Lucas de Sena',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Column(
+                    children: [
+                      Text(
+                        'Programação Mobile',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Professor Alberto',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '© ${DateTime.now().year} - IFMT',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -90,21 +147,5 @@ class _SobreSectionState extends State<SobreSection> {
         ],
       ),
     );
-  }
-
-  Widget _buildLinkItem(BuildContext context, String title, IconData icon, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.primary),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-      trailing: const Icon(Icons.chevron_right, size: 20),
-      onTap: onTap,
-    );
-  }
-
-  Future<void> _launchUrl(String urlString) async {
-    final url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    }
   }
 }
